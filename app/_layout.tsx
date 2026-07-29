@@ -12,6 +12,7 @@ import {
   Figtree_700Bold,
 } from '@expo-google-fonts/figtree';
 import { colors } from '../src/theme/tokens';
+import { SessionProvider } from '../src/features/auth/session-context';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -34,7 +35,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+        <SessionProvider>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
+        </SessionProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
