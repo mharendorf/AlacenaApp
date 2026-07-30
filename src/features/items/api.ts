@@ -3,7 +3,7 @@
 // nunca bloquea la UI esperando a la red. El sync "de verdad" (push+pull) lo
 // orquestan las pantallas llamando runSync() al abrir/reconectar/refrescar.
 import * as Crypto from 'expo-crypto';
-import { getItemRowLocal, getItemsLocal, upsertItemRow } from '../../lib/db/repository';
+import { getItemRowLocal, getItemRowsLocal, getItemsLocal, upsertItemRow } from '../../lib/db/repository';
 import { runSync } from '../../lib/sync/syncEngine';
 import { Item, ItemFormValues } from './types';
 
@@ -70,6 +70,22 @@ export async function toggleEstado(itemId: string, userId: string, estado: 'pend
     sync_status: 'pending',
   });
   triggerBackgroundSync(existing.household_id);
+}
+
+export async function resetAllToPending(householdId: string, userId: string): Promise<void> {
+  const rows = await getItemRowsLocal(householdId);
+  const now = new Date().toISOString();
+  for (const row of rows) {
+    if (row.estado === 'pendiente') continue;
+    await upsertItemRow({
+      ...row,
+      estado: 'pendiente',
+      modificado_por: userId,
+      fecha_modificacion: now,
+      sync_status: 'pending',
+    });
+  }
+  triggerBackgroundSync(householdId);
 }
 
 // Soft-delete: is_deleted + bump de fecha_modificacion, para que el motor de

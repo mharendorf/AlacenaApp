@@ -37,17 +37,20 @@ export const Button = forwardRef<View, ButtonProps>(
         ) : (
           <>
             {icon}
-            {children != null && (
-              <Text
-                style={[
-                  styles.label,
-                  variant === 'primary' && styles.labelPrimary,
-                  variant === 'ghost' && styles.labelGhost,
-                ]}
-              >
-                {children}
-              </Text>
-            )}
+            {children != null &&
+              (typeof children === 'string' || typeof children === 'number' ? (
+                <Text
+                  style={[
+                    styles.label,
+                    variant === 'primary' && styles.labelPrimary,
+                    variant === 'ghost' && styles.labelGhost,
+                  ]}
+                >
+                  {children}
+                </Text>
+              ) : (
+                children
+              ))}
           </>
         )}
       </Pressable>
