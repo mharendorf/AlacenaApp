@@ -11,7 +11,12 @@ export async function fetchRemoteHousehold(householdId: string): Promise<Househo
 export async function pushHousehold(household: Household): Promise<void> {
   const { error } = await supabase
     .from('households')
-    .update({ nombre: household.nombre, ultima_fecha_compra: household.ultima_fecha_compra })
+    .update({
+      nombre: household.nombre,
+      ultima_fecha_compra: household.ultima_fecha_compra,
+      descripcion: household.descripcion,
+      avatar_preset: household.avatar_preset,
+    })
     .eq('id', household.id);
   if (error) throw error;
 }

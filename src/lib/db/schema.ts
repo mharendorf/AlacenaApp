@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS households (
   nombre TEXT NOT NULL,
   codigo_invitacion TEXT NOT NULL,
   ultima_fecha_compra TEXT,
+  descripcion TEXT,
+  avatar_preset TEXT,
   sync_status TEXT NOT NULL DEFAULT 'synced'
 );
 

@@ -1,7 +1,7 @@
 import { getHouseholdRowLocal, upsertHouseholdRow } from '../../lib/db/repository';
 import { runSync } from '../../lib/sync/syncEngine';
 import { supabase } from '../../lib/supabase';
-import { Household } from './types';
+import { AvatarPreset, Household } from './types';
 
 // Crear/unirse a un hogar requiere conexion (son los unicos pasos que
 // bypassean RLS via RPC) — no tiene sentido offline. Se siembra la fila
@@ -39,4 +39,18 @@ export async function finalizarCompra(householdId: string): Promise<string> {
   await upsertHouseholdRow({ ...existing, ultima_fecha_compra: fecha, sync_status: 'pending' });
   runSync(householdId).catch(() => {});
   return fecha;
+}
+
+export async function updateDescripcion(householdId: string, descripcion: string): Promise<void> {
+  const existing = await getHouseholdRowLocal(householdId);
+  if (!existing) throw new Error('Household no encontrado localmente');
+  await upsertHouseholdRow({ ...existing, descripcion, sync_status: 'pending' });
+  runSync(householdId).catch(() => {});
+}
+
+export async function updateAvatarPreset(householdId: string, avatarPreset: AvatarPreset | null): Promise<void> {
+  const existing = await getHouseholdRowLocal(householdId);
+  if (!existing) throw new Error('Household no encontrado localmente');
+  await upsertHouseholdRow({ ...existing, avatar_preset: avatarPreset, sync_status: 'pending' });
+  runSync(householdId).catch(() => {});
 }

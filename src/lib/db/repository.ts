@@ -22,6 +22,11 @@ export async function getItemsLocal(householdId: string): Promise<Item[]> {
   return rows.map(rowToItem);
 }
 
+export async function getItemRowsLocal(householdId: string): Promise<ItemRow[]> {
+  const db = await getDb();
+  return db.getAllAsync<ItemRow>('SELECT * FROM items WHERE household_id = ? AND is_deleted = 0', [householdId]);
+}
+
 export async function getItemRowLocal(id: string): Promise<ItemRow | null> {
   const db = await getDb();
   return (await db.getFirstAsync<ItemRow>('SELECT * FROM items WHERE id = ?', [id])) ?? null;
@@ -83,12 +88,21 @@ export async function getHouseholdRowLocal(id: string): Promise<HouseholdRow | n
 export async function upsertHouseholdRow(row: HouseholdRow): Promise<void> {
   const db = await getDb();
   await db.runAsync(
-    `INSERT INTO households (id, nombre, codigo_invitacion, ultima_fecha_compra, sync_status)
-     VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO households (id, nombre, codigo_invitacion, ultima_fecha_compra, descripcion, avatar_preset, sync_status)
+     VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
        nombre=excluded.nombre, codigo_invitacion=excluded.codigo_invitacion,
-       ultima_fecha_compra=excluded.ultima_fecha_compra, sync_status=excluded.sync_status`,
-    [row.id, row.nombre, row.codigo_invitacion, row.ultima_fecha_compra, row.sync_status]
+       ultima_fecha_compra=excluded.ultima_fecha_compra, descripcion=excluded.descripcion,
+       avatar_preset=excluded.avatar_preset, sync_status=excluded.sync_status`,
+    [
+      row.id,
+      row.nombre,
+      row.codigo_invitacion,
+      row.ultima_fecha_compra,
+      row.descripcion,
+      row.avatar_preset,
+      row.sync_status,
+    ]
   );
 }
 
