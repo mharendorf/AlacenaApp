@@ -10,6 +10,7 @@
 <helmet>
   <link rel="stylesheet" href="_ds/organic-c13082f7-3751-4c94-a233-bde01fff1186/styles.css">
   <script src="_ds/organic-c13082f7-3751-4c94-a233-bde01fff1186/_ds_bundle.js"></script>
+  <script src="./image-slot.js"></script>
   <style>
     @keyframes toastIn { from { opacity:0; transform:translate(-50%,10px);} to { opacity:1; transform:translate(-50%,0);} }
     .sa-scrollzone::-webkit-scrollbar{ display:none; }
@@ -109,21 +110,49 @@
       </sc-if>
 
       <sc-if value="{{isHome}}" hint-placeholder-val="{{false}}">
-        <div style="flex:1;display:flex;flex-direction:column;padding:0 28px 36px;align-items:center;justify-content:center;text-align:center;gap:28px">
-          <div>
-            <h1 style="font-size:28px;margin:0 0 8px">{{householdNameInput}}</h1>
-            <p style="font-size:14px;opacity:0.7;margin:0">La lista de compras de tu hogar</p>
+        <div style="flex:1;display:flex;flex-direction:column;padding:0 28px 36px;align-items:center;justify-content:center;text-align:center;gap:20px;overflow-y:auto">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+            <sc-if value="{{showUpload}}" hint-placeholder-val="{{true}}">
+              <image-slot id="household-avatar" shape="circle" style="width:96px;height:96px" placeholder="Subí una foto"></image-slot>
+              <button class="btn btn-ghost" style="font-size:12px;padding:2px 6px" onClick="{{toggleAvatarPicker}}">Elegir un avatar</button>
+            </sc-if>
+            <sc-if value="{{!showUpload}}" hint-placeholder-val="{{false}}">
+              <div style="width:96px;height:96px;border-radius:999px;background:{{selectedPreset.bg}};display:flex;align-items:center;justify-content:center">
+                <span style="font-family:var(--font-heading);font-size:34px;color:{{selectedPreset.fg}}">{{selectedPreset.letter}}</span>
+              </div>
+              <button class="btn btn-ghost" style="font-size:12px;padding:2px 6px" onClick="{{useUploadedPhoto}}">Subir una foto</button>
+            </sc-if>
+            <sc-if value="{{avatarPickerOpen}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;gap:8px;margin-top:2px">
+                <sc-for list="{{avatarPresets}}" as="p" hint-placeholder-count="5">
+                  <div onClick="{{p.onSelect}}" style="width:28px;height:28px;border-radius:999px;background:{{p.bg}};border:{{p.ring}};cursor:pointer;display:flex;align-items:center;justify-content:center">
+                    <span style="font-family:var(--font-heading);font-size:12px;color:{{p.fg}}">{{p.letter}}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
           </div>
-          <div style="background:var(--color-surface);border-radius:24px;padding:24px;width:100%;display:flex;flex-direction:column;gap:6px">
-            <span style="font-family:var(--font-heading);font-size:32px">{{pendingCount}} <span style="font-size:16px;opacity:0.55;font-family:var(--font-body)">de {{totalCount}}</span></span>
-            <span style="font-size:13px;opacity:0.65">artículos pendientes de comprar</span>
-            <div style="height:1px;background:var(--color-divider);margin:12px 0"></div>
-            <span style="font-size:13px;opacity:0.65">Última compra: <strong style="opacity:1">{{lastPurchaseLabel}}</strong></span>
+          <div style="width:100%">
+            <h1 style="font-size:28px;margin:0 0 8px">{{householdNameInput}}</h1>
+            <input class="input" style="background:transparent;border:none;text-align:center;font-size:14px;opacity:0.7;padding:0;width:100%" value="{{householdDescription}}" onChange="{{onHouseholdDescriptionChange}}" placeholder="Descripción del hogar"/>
+          </div>
+          <div style="background:var(--color-surface);border-radius:20px;padding:20px;width:100%">
+            <p style="margin:0;font-size:18px;line-height:1.4"><strong style="font-weight:700">{{pendingCount}}</strong> de {{totalCount}} artículos pendientes</p>
+          </div>
+          <div style="background:var(--color-surface);border-radius:20px;padding:20px;width:100%;display:flex;align-items:center;gap:14px">
+            <div style="width:38px;height:38px;border-radius:999px;background:var(--color-accent-100);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="16" rx="3" stroke="var(--color-accent-700)" stroke-width="2"/><path d="M4 10h16M8 3v4M16 3v4" stroke="var(--color-accent-700)" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <div style="text-align:left">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6">Última compra</div>
+              <div style="font-size:16px;font-weight:600">{{lastPurchaseLabel}}</div>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:12px;width:100%">
             <button class="btn btn-primary btn-block" style="height:50px;font-size:15px" onClick="{{addFromHome}}">Agregar producto</button>
             <button class="btn btn-secondary btn-block" style="height:50px;font-size:15px;margin-top:0" onClick="{{goToLista}}">Ver la lista</button>
           </div>
+          <button class="btn btn-ghost" style="font-size:13px;color:var(--color-neutral-600)" onClick="{{logOut}}">Cerrar sesión</button>
         </div>
       </sc-if>
 
@@ -358,6 +387,14 @@ const SEED_ITEMS = [
   { id: 13, nombre: 'Pilas AA', marca: '', variedad: '', cantidad: 4, unidad: 'unidad', categoria: 'varios', estado: 'pendiente' },
 ];
 
+const AVATAR_PRESETS = [
+  { key: 'a', bg: 'var(--color-accent-200)', fg: 'var(--color-accent-700)', letter: 'C' },
+  { key: 'b', bg: 'var(--color-accent-2-200)', fg: 'var(--color-accent-2-700)', letter: 'H' },
+  { key: 'c', bg: 'oklch(88% 0.05 230)', fg: 'oklch(35% 0.08 230)', letter: 'M' },
+  { key: 'd', bg: 'oklch(88% 0.05 320)', fg: 'oklch(35% 0.08 320)', letter: 'F' },
+  { key: 'e', bg: 'var(--color-neutral-200)', fg: 'var(--color-neutral-700)', letter: 'L' },
+];
+
 const UNIDADES = ['unidad', 'litro', 'kg', 'paquete'];
 const emptyForm = () => ({ id: null, nombre: '', categoria: 'almacen', marca: '', variedad: '', cantidad: 1, unidad: 'unidad' });
 
@@ -380,7 +417,16 @@ class Component extends DCLogic {
     hiddenCategories: {},
     optionsOpen: false,
     setupExpanded: false,
+    householdDescription: 'La lista de compras de tu hogar',
+    avatarPreset: null,
+    avatarPickerOpen: false,
   };
+
+  onHouseholdDescriptionChange = (e) => this.setState({ householdDescription: e.target.value });
+  selectAvatarPreset = (key) => this.setState({ avatarPreset: key, avatarPickerOpen: false });
+  useUploadedPhoto = () => this.setState({ avatarPreset: null, avatarPickerOpen: false });
+  toggleAvatarPicker = () => this.setState((s) => ({ avatarPickerOpen: !s.avatarPickerOpen }));
+  logOut = () => this.setState({ screen: 'welcome' });
 
   toggleSetup = () => this.setState((s) => ({ setupExpanded: !s.setupExpanded }));
 
@@ -567,6 +613,19 @@ class Component extends DCLogic {
       addFromHome: this.addFromHome,
       setupExpanded: s.setupExpanded,
       toggleSetup: this.toggleSetup,
+      householdDescription: s.householdDescription,
+      onHouseholdDescriptionChange: this.onHouseholdDescriptionChange,
+      showUpload: !s.avatarPreset,
+      avatarPresets: AVATAR_PRESETS.map((p) => ({
+        ...p,
+        ring: s.avatarPreset === p.key ? '2.5px solid var(--color-accent-700)' : '2.5px solid transparent',
+        onSelect: () => this.selectAvatarPreset(p.key),
+      })),
+      selectedPreset: AVATAR_PRESETS.find((p) => p.key === s.avatarPreset) || null,
+      useUploadedPhoto: this.useUploadedPhoto,
+      avatarPickerOpen: s.avatarPickerOpen,
+      toggleAvatarPicker: this.toggleAvatarPicker,
+      logOut: this.logOut,
       householdNameInput: s.householdNameInput || 'Casa Mai',
       inviteCode: s.inviteCode,
       joinCodeInput: s.joinCodeInput,

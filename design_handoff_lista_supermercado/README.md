@@ -35,6 +35,8 @@ Sistema de diseño "Organic" (`design-system/styles.css`, `design-system/readme.
 - Botón primario **"Ir a mi hogar"**: para el uso recurrente (entrar directo a la lista existente), es la acción más frecuente y por eso va primero.
 - Botón secundario **"Configurar un hogar"**: al tocarlo se expande in-place (no navega) y revela dos botones — **"Crear un hogar"** y **"Tengo un código"** — para el caso, más esporádico, de dar de alta o unirse a un hogar. Estado `setupExpanded` en el prototipo.
 
+> Nota de implementación real: en el MVP, "Ir a mi hogar" asume sesión/hogar ya existentes (login persistido); en este prototipo es un atajo de navegación sin backend.
+
 ### 2. Onboarding — Crear hogar (`isCreate`)
 - Botón ícono "volver" (chevron) arriba a la izquierda.
 - Input de texto "Nombre del hogar" (placeholder "Casa Mai").
@@ -51,9 +53,12 @@ Sistema de diseño "Organic" (`design-system/styles.css`, `design-system/readme.
 
 ### 5. Landing / Inicio (`isHome`)
 - Pantalla intermedia tras el onboarding y accesible con el botón "volver al inicio" desde la Lista.
-- Título con nombre del hogar + subcopy.
-- Tarjeta resumen (fondo `--color-surface`, radio 24px): contador grande "XX de YY" + "artículos pendientes de comprar", separador, "Última compra: <fecha>".
+- **Avatar del hogar**: círculo de 96px arriba del nombre. Por defecto es una zona de carga de foto (drag&drop o click-to-browse). Debajo, un link de texto "Elegir un avatar" despliega 5 presets circulares de color+inicial (paleta del sistema); al elegir uno reemplaza la foto y el link cambia a "Subir una foto" para volver atrás. Solo una opción visible a la vez — nunca ambas juntas.
+- **Nombre del hogar** (h1) + **descripción editable**: input de texto libre (sin borde) debajo del nombre, editable por el usuario en cualquier momento — reemplaza el copy fijo anterior.
+- Tarjeta "artículos pendientes": una sola tipografía y tamaño (Figtree 18px), solo el número en negrita — evitar mezclar Caprasimo/Figtree o tamaños distintos en esta línea.
+- Tarjeta separada "Última compra": ícono + fecha, independiente de la de pendientes.
 - Dos botones apilados: "Agregar producto" (primario, abre directamente el alta de artículo sobre la Lista) y "Ver la lista" (secundario).
+- **Cerrar sesión**: link de texto discreto al pie de la pantalla.
 
 ### 6. Lista (`isLista`)
 - Header: botón ícono "volver al inicio" (→ Landing), nombre del hogar + "Última compra: X · Y pendientes de Z", botón ícono "Opciones" (abre sheet de opciones), botón "Finalizar compra".
@@ -85,6 +90,8 @@ Sistema de diseño "Organic" (`design-system/styles.css`, `design-system/readme.
 Estado relevante a portar a la arquitectura real:
 - `screen`: welcome | create | invite | join | home | lista (navegación)
 - `setupExpanded`: bool — controla si en Bienvenida se muestran las opciones "Crear un hogar" / "Tengo un código"
+- `householdDescription`: texto libre editable en la Landing
+- `avatarPreset`: null (foto subida) | clave de preset elegido; `avatarPickerOpen`: bool — controla la visibilidad del selector de presets
 - `items`: array de artículos (ver modelo de datos, sección 4.1 del funcional)
 - `search`: texto de búsqueda
 - `collapsed`: mapa categoría → colapsada sí/no (UI, no persiste en backend)
@@ -101,6 +108,7 @@ El modelo de datos definitivo (Artículo, Hogar, Usuario), reglas de negocio, of
 
 ## Files
 - `SuperApp.dc.html` — el prototipo completo (todas las pantallas y estados).
+- `image-slot.js` — componente usado para la carga de foto del avatar (drag&drop / click-to-browse); en la app real reemplazar por el picker de imágenes nativo (cámara/galería).
 - `design-system/styles.css` — hoja de tokens y componentes del sistema Organic (colores, tipografía, spacing, radios, sombras, clases `.btn`, `.input`, `.card`, `.tag`, `.seg`, etc.).
 - `design-system/readme.md` — guía completa del sistema de diseño.
 - `funcional-lista-supermercado-mvp.md` — documento funcional original (alcance, modelo de datos, reglas de negocio, pantallas, decisiones confirmadas, puntos abiertos).
