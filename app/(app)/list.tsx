@@ -21,6 +21,8 @@ import { Household } from '../../src/features/household/types';
 import { ItemFormSheet, ItemFormSheetHandle } from '../../src/features/items/ItemFormSheet';
 import { listItems, toggleEstado } from '../../src/features/items/api';
 import { Item } from '../../src/features/items/types';
+import { useNetworkStatus } from '../../src/hooks/useNetworkStatus';
+import { runSyncWithTimeout } from '../../src/lib/sync/syncEngine';
 import { CATEGORY_LABELS, CATEGORY_ORDER, CategoryIcon } from '../../src/utils/categories';
 import { CategoryKey, categoryColors, colors, fonts } from '../../src/theme/tokens';
 
@@ -46,16 +48,24 @@ export default function Lista() {
 
   const sheetRef = useRef<ItemFormSheetHandle>(null);
 
-  const loadAll = useCallback(async () => {
-    if (!householdId) return;
-    const [householdData, itemsData] = await Promise.all([getHousehold(householdId), listItems(householdId)]);
-    setHousehold(householdData);
-    setItems(itemsData);
-  }, [householdId]);
+  const loadAll = useCallback(
+    async (withSync: boolean) => {
+      if (!householdId) return;
+      if (withSync) await runSyncWithTimeout(householdId);
+      const [householdData, itemsData] = await Promise.all([getHousehold(householdId), listItems(householdId)]);
+      setHousehold(householdData);
+      setItems(itemsData);
+    },
+    [householdId]
+  );
+
+  const isOnline = useNetworkStatus(() => {
+    if (householdId) loadAll(true);
+  });
 
   useEffect(() => {
     setLoading(true);
-    loadAll().finally(() => setLoading(false));
+    loadAll(true).finally(() => setLoading(false));
   }, [loadAll]);
 
   useEffect(() => {
@@ -64,7 +74,7 @@ export default function Lista() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadAll();
+    await loadAll(true);
     setRefreshing(false);
   };
 
@@ -75,7 +85,7 @@ export default function Lista() {
     try {
       await toggleEstado(item.id, userId, nextEstado);
     } catch {
-      await loadAll();
+      await loadAll(false);
     }
   };
 
@@ -104,8 +114,15 @@ export default function Lista() {
   if (!householdId || !userId) return null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
+    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top + 6 }}>
+      {!isOnline && (
+        <View style={styles.offlineBanner}>
+          <Text style={styles.offlineBannerText}>
+            Sin conexión — tus cambios se guardan y se sincronizan solos al reconectar
+          </Text>
+        </View>
+      )}
+      <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
           <Button variant="icon" onPress={() => router.replace('/(app)/home')}>
             <ChevronLeft size={17} color={colors.text} strokeWidth={2.3} />
@@ -224,14 +241,23 @@ export default function Lista() {
         ref={sheetRef}
         householdId={householdId}
         userId={userId}
-        onSaved={loadAll}
-        onDeleted={loadAll}
+        onSaved={() => loadAll(false)}
+        onDeleted={() => loadAll(false)}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  offlineBanner: {
+    marginHorizontal: 20,
+    marginBottom: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: colors.accentRamp[100],
+  },
+  offlineBannerText: { fontFamily: fonts.body, fontSize: 12, color: colors.accentRamp[800] },
   header: { paddingHorizontal: 20, paddingBottom: 14, gap: 14 },
   title: { fontFamily: fonts.heading, fontSize: 22, color: colors.text },
   subtitle: { fontFamily: fonts.body, fontSize: 12.5, color: colors.text, opacity: 0.65, marginTop: 4 },

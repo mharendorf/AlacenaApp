@@ -10,6 +10,7 @@ import { useSession } from '../../src/features/auth/session-context';
 import { getHousehold } from '../../src/features/household/api';
 import { Household } from '../../src/features/household/types';
 import { listItems } from '../../src/features/items/api';
+import { runSyncWithTimeout } from '../../src/lib/sync/syncEngine';
 import { colors, fonts } from '../../src/theme/tokens';
 
 function formatFecha(iso: string | null) {
@@ -26,22 +27,27 @@ export default function Home() {
   const [pending, setPending] = useState(0);
   const [total, setTotal] = useState(0);
 
-  const load = useCallback(async () => {
-    if (!householdId) return;
-    const [householdData, items] = await Promise.all([getHousehold(householdId), listItems(householdId)]);
-    setHousehold(householdData);
-    setTotal(items.length);
-    setPending(items.filter((it) => it.estado !== 'comprado').length);
-  }, [householdId]);
+  const load = useCallback(
+    async (withSync: boolean) => {
+      if (!householdId) return;
+      if (withSync) await runSyncWithTimeout(householdId);
+      const [householdData, items] = await Promise.all([getHousehold(householdId), listItems(householdId)]);
+      setHousehold(householdData);
+      setTotal(items.length);
+      setPending(items.filter((it) => it.estado !== 'comprado').length);
+    },
+    [householdId]
+  );
 
   useEffect(() => {
-    load();
+    load(true);
   }, [load]);
 
-  // Vuelve a cargar los contadores cada vez que se regresa desde la Lista.
+  // Vuelve a cargar los contadores cada vez que se regresa desde la Lista —
+  // la Lista ya se encarga de sincronizar, acá solo releemos lo local.
   useFocusEffect(
     useCallback(() => {
-      load();
+      load(false);
     }, [load])
   );
 
